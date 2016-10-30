@@ -20,15 +20,15 @@ class FSExecCompiler {
   };
 
 
-  ScriptInfo compile(String codeBase, String configBase, String tempBase, String outputBase) {
-    println("code: $codeBase config: $configBase temp: $tempBase output: $outputBase")
-    ScriptInfo info = new ScriptInfo(codeBasePath:codeBase,configBasePath:configBase,workBasePath:tempBase,outputBasePath:outputBase)
+  FSEScript compile(String codeBase, String configBase, String workBase, String outputBase) {
+    println("code: $codeBase config: $configBase temp: $workBase output: $outputBase")
+    FSEFlow info = new FSEScript(codeBasePath:codeBase,configBasePath:configBase,workBasePath:workBase,outputBasePath:outputBase)
     info.rootStep = compileStep(info, null, "ROOT")
     return info
   }
 
-  StepInfo compileStep(ScriptInfo script, StepInfo parentStep, String stepDirName) {
-    StepInfo curStep = new StepInfo(script:script, parentStep:parentStep)
+  FSEStep compileStep(FSEFlow script, FSEStep parentStep, String stepDirName) {
+    FSEStep curStep = new FSEStep(script:script, parentStep:parentStep)
     curStep.name = stepDirName
     curStep.path = parentStep == null ? script.codeBasePath : parentStep.path + "/" + stepDirName
 
@@ -49,13 +49,13 @@ class FSExecCompiler {
     return curStep
   }
 
-  void determineStepType(ScriptInfo script, StepInfo curStep, File codeDir) {
+  void determineStepType(FSEScript script, FSEStep curStep, File codeDir) {
     File[] files = codeDir.listFiles(filesOnlyFilter)
     for (File file : files) {
       if (StringUtils.endsWithIgnoreCase(file.name,".sh")) {
         println "detected SHELL step: "+file.name
         curStep.type = StepType.SHELL
-        ShellExecInfo shellExec = new ShellExecInfo(stepInfo:curStep)
+        FSEScript shellExec = new FSEScript(stepInfo:curStep)
         shellExec.command = [curStep.path+"/"+file.name]
         curStep.execInfo = shellExec
       }
@@ -74,7 +74,7 @@ class FSExecCompiler {
     }
   }
 
-  List<File> calcSubStepDirs(ScriptInfo script, StepInfo curStep, File codeDir) {
+  List<File> calcSubStepDirs(FSEScript script, FSEStep curStep, File codeDir) {
     List<File> subStepDirs = []
     File[] dirs = codeDir.listFiles(dirsOnlyFilter)
     for (File dir : dirs) {
@@ -89,7 +89,7 @@ class FSExecCompiler {
     return subStepDirs
   }
 
-  File checkForSubstepsErrorHandler(ScriptInfo script, StepInfo curStep, File codeDir) {
+  File checkForSubstepsErrorHandler(FSEScript script, FSEStep curStep, File codeDir) {
     File[] dirs = codeDir.listFiles()
     for (File dir : dirs) {
       if (dir.name.equalsIgnoreCase('@StepError')) {
@@ -99,7 +99,7 @@ class FSExecCompiler {
     return null
   }
 
-  File checkForSubstepsFinallyHandler(ScriptInfo script, StepInfo curStep, File codeDir) {
+  File checkForSubstepsFinallyHandler(FSEScript script, FSEStep curStep, File codeDir) {
     File[] dirs = codeDir.listFiles()
     for (File dir : dirs) {
       if (dir.name.equalsIgnoreCase('@StepFinally')) {
@@ -109,7 +109,7 @@ class FSExecCompiler {
     return null
   }
 
-  File checkForErrorHandler(ScriptInfo script, StepInfo curStep, File codeDir) {
+  File checkForErrorHandler(FSEScript script, FSEStep curStep, File codeDir) {
     File[] dirs = codeDir.listFiles()
     for (File dir : dirs) {
       if (dir.name.equalsIgnoreCase('@Error')) {
@@ -119,7 +119,7 @@ class FSExecCompiler {
     return null
   }
 
-  File checkForFinallyHandler(ScriptInfo script, StepInfo curStep, File codeDir) {
+  File checkForFinallyHandler(FSEScript script, FSEStep curStep, File codeDir) {
     File[] dirs = codeDir.listFiles()
     for (File dir : dirs) {
       if (dir.name.equalsIgnoreCase('@Finally')) {

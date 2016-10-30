@@ -1,25 +1,25 @@
 package fsexec.execute
 
-import fsexec.compile.ScriptExec
-import fsexec.compile.ScriptInfo
-import fsexec.compile.ShellExecInfo
-import fsexec.compile.StepInfo
+import fsexec.compile.FSEFlow
+import fsexec.compile.FSEFlowExec
+import fsexec.compile.FSEScript
+import fsexec.compile.FSEStep
 
 class FSExecutor {
 
-  void exec(ScriptInfo script) {
-    ScriptExec exec = new ScriptExec()
+  void exec(FSEFlow script) {
+    FSEFlowExec exec = new FSEFlowExec()
     execStep(script.rootStep, exec)
     // send last stream to output
     exec.previousProcess.consumeProcessOutputStream(System.out)
   }
 
-  void execStep(StepInfo stepInfo, ScriptExec exec) {
-    for (StepInfo substep : stepInfo.childSteps) {
+  void execStep(FSEStep stepInfo, FSEFlowExec exec) {
+    for (FSEStep substep : stepInfo.childSteps) {
       execStep(substep,exec)
     }
     // assume shell for now
-    ShellExecInfo shellInfo = stepInfo.execInfo
+    FSEScript shellInfo = stepInfo.execInfo
     if (shellInfo != null) {
       if (shellInfo.command != null) {
         ProcessBuilder pb = new ProcessBuilder(shellInfo.command)

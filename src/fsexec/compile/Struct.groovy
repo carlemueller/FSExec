@@ -1,27 +1,27 @@
 package fsexec.compile
 
-class ScriptInfo {
+class FSEFlow {
   String codeBasePath
   String configBasePath
   String workBasePath
   String outputBasePath
   Map rootContext = [:]
-  StepInfo rootStep
+  FSEStep rootStep
 }
 
-class StepInfo {
+class FSEStep {
   String name
   String path
   StepType type
-  ScriptInfo script
-  StepInfo parentStep
+  FSEFlow flow
+  FSEStep parentStep
   Map stepContext = [:]
-  List<StepInfo> childSteps = []
+  List<FSEStep> childSteps = []
   Object execInfo
 }
 //execute(List commands, String[] envp, File workdir)
-class ShellExecInfo {
-  StepInfo stepInfo
+class FSEScript {
+  FSEStep stepInfo
   List<String> command
   String[] env
   String workDir
@@ -29,9 +29,8 @@ class ShellExecInfo {
   // redirectErrorStream, redirectOutputStream
 }
 
-class ScriptExec {
+class FSEFlowExec {
   Process previousProcess
-
 }
 
 
