@@ -20,27 +20,29 @@ class FSExecCompiler {
   };
 
 
-  FSEScript compile(String codeBase, String configBase, String workBase, String outputBase) {
+  FSEFlow compile(String codeBase, String configBase, String workBase, String outputBase) {
     println("code: $codeBase config: $configBase temp: $workBase output: $outputBase")
-    FSEFlow info = new FSEScript(codeBasePath:codeBase,configBasePath:configBase,workBasePath:workBase,outputBasePath:outputBase)
+    FSEFlow info = new FSEFlow(codeBasePath:codeBase,configBasePath:configBase,workBasePath:workBase,outputBasePath:outputBase)
     info.rootStep = compileStep(info, null, "ROOT")
     return info
   }
 
-  FSEStep compileStep(FSEFlow script, FSEStep parentStep, String stepDirName) {
-    FSEStep curStep = new FSEStep(script:script, parentStep:parentStep)
+  FSEStep compileStep(FSEFlow flow, FSEStep parentStep, String stepDirName) {
+    FSEStep curStep = new FSEStep(flow:flow, parentStep:parentStep)
     curStep.name = stepDirName
-    curStep.path = parentStep == null ? script.codeBasePath : parentStep.path + "/" + stepDirName
+    curStep.path = parentStep == null ? flow.codeBasePath : parentStep.path + "/" + stepDirName
 
-    File codeDir = new File(script.codeBasePath + "/" + (parentStep == null ? "" : stepDirName))
-    File configDir = new File(script.codeBasePath + "/" + (parentStep == null ? "" : stepDirName))
+    File codeDir = new File(flow.codeBasePath + "/" + (parentStep == null ? "" : stepDirName))
+    File configDir = new File(flow.codeBasePath + "/" + (parentStep == null ? "" : stepDirName))
     // input / output / temp TBD
 
-    List<File> subStepDirs = calcSubStepDirs(script, curStep, codeDir)
-    curStep.childSteps = subStepDirs.collect { compileStep(script,curStep,it.name) }
+    List<File> subStepDirs = calcSubStepDirs(flow, curStep, codeDir)
+    curStep.childSteps = subStepDirs.collect { compileStep(flow,curStep,it.name) }
+
+    Map<String,File> stepConfig = calcStepFiles(flow,curStep,codeDir)
 
     // identify type of step
-    determineStepType(script,curStep,codeDir)
+    determineStepType(flow,curStep,stepConfig)
 
     // identify processing mode: sequential, each line, map reduce, fork join
     // identify piping / transition / flags
@@ -49,32 +51,48 @@ class FSExecCompiler {
     return curStep
   }
 
-  void determineStepType(FSEScript script, FSEStep curStep, File codeDir) {
-    File[] files = codeDir.listFiles(filesOnlyFilter)
-    for (File file : files) {
-      if (StringUtils.endsWithIgnoreCase(file.name,".sh")) {
-        println "detected SHELL step: "+file.name
+  void determineStepType(FSEFlow flow, FSEStep curStep, Map<String,File> stepConfig) {
+
+    for (String cfgkey : stepConfig.keySet()) {
+      if (StringUtils.endsWithIgnoreCase(cfgkey,".sh")) {
+        println "detected SHELL step: "+cfgkey
         curStep.type = StepType.SHELL
         FSEScript shellExec = new FSEScript(stepInfo:curStep)
-        shellExec.command = [curStep.path+"/"+file.name]
+        shellExec.command = [curStep.path+"/"+cfgkey]
         curStep.execInfo = shellExec
       }
-      if (StringUtils.endsWithIgnoreCase(file.name, ".js")) {
-        println "detected JAVASCRIPT step: "+file.name
+      if (StringUtils.endsWithIgnoreCase(cfgkey, ".js")) {
+        println "detected JAVASCRIPT step: "+cfgkey
         //TODO  StepType.JAVASCRIPT // exec with java js engine
       }
-      if (StringUtils.endsWithIgnoreCase(file.name, ".jar")) {
-        println "detected JAVA step: "+file.name
+      if (StringUtils.endsWithIgnoreCase(cfgkey, ".jar")) {
+        println "detected JAVA step: "+cfgkey
         //TODO StepType.JAVA // exec separate JVM
       }
-      if (StringUtils.endsWithIgnoreCase(file.name, ".groovy")) {
-        println "detected GROOVY step: "+file.name
+      if (StringUtils.endsWithIgnoreCase(cfgkey, ".groovy")) {
+        println "detected GROOVY step: "+cfgkey
         //TODO StepType.GROOVY // exec with groovy cmd line
       }
     }
   }
 
-  List<File> calcSubStepDirs(FSEScript script, FSEStep curStep, File codeDir) {
+  Map<String,File> calcStepFiles(FSEFlow flow, FSEStep curStep, File codeDir) {
+    Map<String,File> files = [:]
+    File configDir = StringUtils.isNotEmpty(flow.configBasePath) ? new File(flow.configBasePath +"/"+curStep.path) : null
+    File[] configFiles = configDir?.isDirectory() ? configDir.listFiles() : [] as File[]
+    File[] codeFiles = codeDir.listFiles()
+    for (File codeFile : codeFiles) {
+      if (!codeFile.name.matches("^[0-9]+(.*)")) {
+        files.put(codeFile.name,codeFile)
+      }
+    }
+    for (File configFile : configFiles) {
+      files.put(configFile.name, configFile)
+    }
+    return files
+  }
+
+  List<File> calcSubStepDirs(FSEFlow flow, FSEStep curStep, File codeDir) {
     List<File> subStepDirs = []
     File[] dirs = codeDir.listFiles(dirsOnlyFilter)
     for (File dir : dirs) {

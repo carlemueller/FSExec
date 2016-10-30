@@ -15,9 +15,13 @@ class FSExecutor {
   }
 
   void execStep(FSEStep stepInfo, FSEFlowExec exec) {
+
+    // execute substeps first
     for (FSEStep substep : stepInfo.childSteps) {
       execStep(substep,exec)
     }
+
+    // execute main task
     // assume shell for now
     FSEScript shellInfo = stepInfo.execInfo
     if (shellInfo != null) {
@@ -38,3 +42,11 @@ class FSExecutor {
     }
   }
 }
+
+// these modes inherit for all substeps
+class FSEFlowExecModes {
+  public static final String FLOW_EXEC_PIPED = "!!FLOW_EXEC_PIPED" // this is the default exec model
+  public static final String FLOW_EXEC_SEQUENTIAL = "!!FLOW_EXEC_SEQUENTIAL" // complete each step before executing the next
+}
+
+// System.getEnv returns map.
