@@ -1,0 +1,18 @@
+- "compile" input + config + code dirs
+  - problem: pipes between steps.  
+  - problem: java jvms (heating, etc)
+  - problem: gluing inputs/outputs
+
+- dirt simple use case
+- dirt simple + config
+- 
+
+- basic execution of .sh:
+  
+- error model
+- restart model
+- status output
+- jumps / conditional jumps
+ 
+ 
+- do we do a shared context?
