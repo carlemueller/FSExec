@@ -1,10 +1,10 @@
 package fsexec.compile
 
 class FSEFlow {
-  String codeBasePath
-  String configBasePath
-  String workBasePath
-  String outputBasePath
+  String codeBasePath       // base directory of flow
+  String configBasePath     // optional decorating directory structure that provides additional config info
+  String workBasePath       // if intermediate files or flow control is used, this is necessary
+  String outputBasePath     // if a directory with final output files is needed
   Map rootContext = [:]
   FSEStep rootStep
 }
