@@ -1,13 +1,18 @@
-- "compile" input + config + code dirs
-  - problem: pipes between steps.  
-  - problem: java jvms (heating, etc)
-  - problem: gluing inputs/outputs
+1) sequential processing mode (flow + step) <-- DONE
+   - working dir 
+2) environment / input / input arguments
+3) flow control (stop)
+4) error / finally
+5) output routing
+6) cleanup
 
-- dirt simple use case
-- dirt simple + config
-- 
 
-- basic execution of .sh:
+
+
+
+
+- problem: gluing inputs/outputs
+
   
 - error model
 - restart model

@@ -55,7 +55,7 @@ class FSExecCompiler {
   FSEStep compileStep(FSEFlow flow, FSEStep parentStep, String stepDirName) {
     FSEStep curStep = new FSEStep(flow:flow, parentStep:parentStep)
     curStep.name = stepDirName
-    curStep.index = parentStep == null ? "~~" : getFirstGroup(indexExtractor,curStep.name)
+    curStep.index = parentStep == null ? "000" : getFirstGroup(indexExtractor,curStep.name)
     curStep.indexPath = (parentStep == null ? "" : parentStep.indexPath)+"~"+curStep.index
     curStep.path = parentStep == null ? flow.codeBasePath : parentStep.path + "/" + stepDirName
 
