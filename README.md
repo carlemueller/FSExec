@@ -1,22 +1,21 @@
 # FSExec
-A script / workflow execution framework that modularizes tasks using the filesystem and subdirectories
 
-Here's an example (that you wouldn't use this framework for):
+A filesystem-based workflow/orchestration mini-engine to enable writing modularized, polylingual, and organized scripts for ETL, administration, or whatever.
 
-Let's say this piped command is too complex, and we wanted to restructure it using FSExec: 
+The basic idea is that a filesystem and directory tree is designed to organize information in UNIX, so why not use a directory structure to represent the steps and stages to a workflow?
 
-cat <some file> | grep ccc | tr "[a-z]" "[A-Z]"
+For example, imagine this unix command:
 
-This directory structure is created:
+    cat <some file> | grep ccc | tr "[a-z]" "[A-Z]"
 
-sample-cat-grep-upcase
-  01-cat
-    cat.sh
-  02-grep
-    grep.sh
-  03-upcase
-    upcase.sh
-    
-The execution of FSExec("/Path/To/sample-cat-grep-upcase") should do the same as the piped command.
+as this directory structure:
 
-This is just an illustrative example. FSExec is for organizing much more complicated functions. 
+    [dump-filter-upcase]
+      [01-dumpfile]
+        cat-the-file.sh
+      [02-filter]
+        grep.perl
+      [03-upcase]
+        tr.sh
+        
+Now, I'm not advocating the reduction of all useful piped commands into FSExec flows, but one could see how something much more complicated would benefit from being broken down a bit.
