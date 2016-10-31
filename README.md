@@ -19,3 +19,7 @@ as this directory structure:
         tr.sh
         
 Now, I'm not advocating the reduction of all useful piped commands into FSExec flows, but one could see how something much more complicated would benefit from being broken down a bit.
+
+See the Wiki for more. 
+
+Send suggestions to gmail: carlemueller.
