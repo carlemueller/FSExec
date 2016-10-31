@@ -22,4 +22,4 @@ Now, I'm not advocating the reduction of all useful piped commands into FSExec f
 
 See the Wiki for more. 
 
-Send suggestions to gmail: carlemueller.
+Send suggestions to gmail.
