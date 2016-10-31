@@ -25,8 +25,8 @@ class FSExecCompiler {
   static Pattern indexExtractor = Pattern.compile("([0-9]+)(.*)")
 
 
-  FSEFlow compile(String codeBase, String configBase, String workBase, String inputBase, String outputBase) {
-    println("code: $codeBase config: $configBase temp: $workBase output: $outputBase")
+  FSEFlow compile(String codeBase, String configBase, String workBase, String inputBase, String outputBase, String[] args) {
+    log.debug("code: $codeBase config: $configBase temp: $workBase output: $outputBase")
     if (codeBase == null) {
       throw new IllegalStateException("Flow compilation error: code base directory is required")
     }
@@ -46,7 +46,7 @@ class FSExecCompiler {
       throw new IllegalStateException("Flow compilation error: output directory ${outputBase} does not exist")
     }
 
-    FSEFlow info = new FSEFlow(codeBasePath:codeBase,configBasePath:configBase,workBasePath:workBase,outputBasePath:outputBase)
+    FSEFlow info = new FSEFlow(codeBasePath:codeBase,configBasePath:configBase,workBasePath:workBase,outputBasePath:outputBase,arguments:args)
     info.rootStep = compileStep(info, null, "ROOT")
     return info
   }
@@ -78,22 +78,29 @@ class FSExecCompiler {
   void determineStepType(FSEFlow flow, FSEStep curStep) {
     for (String cfgkey : curStep.stepConfig.keySet()) {
       if (StringUtils.endsWithIgnoreCase(cfgkey,".sh")) {
-        println "detected SHELL step: "+cfgkey
+        log.debug( "detected SHELL step: "+cfgkey)
         curStep.type = StepType.SHELL
         FSEScript shellExec = new FSEScript(stepInfo:curStep)
         shellExec.command = [curStep.path+"/"+cfgkey]
+        // initial input arguments
+        if (flow.arguments != null && !flow.argsUsed) {
+          flow.argsUsed = true
+          for (String arg : flow.arguments) {
+            shellExec.command.add(arg)
+          }
+        }
         curStep.execInfo = shellExec
       }
       if (StringUtils.endsWithIgnoreCase(cfgkey, ".js")) {
-        println "detected JAVASCRIPT step: "+cfgkey
+        log.debug "detected JAVASCRIPT step: "+cfgkey
         //TODO  StepType.JAVASCRIPT // exec with java js engine
       }
       if (StringUtils.endsWithIgnoreCase(cfgkey, ".jar")) {
-        println "detected JAVA step: "+cfgkey
+        log.debug "detected JAVA step: "+cfgkey
         //TODO StepType.JAVA // exec separate JVM
       }
       if (StringUtils.endsWithIgnoreCase(cfgkey, ".groovy")) {
-        println "detected GROOVY step: "+cfgkey
+        log.debug "detected GROOVY step: "+cfgkey
         //TODO StepType.GROOVY // exec with groovy cmd line
       }
     }
@@ -150,7 +157,7 @@ class FSExecCompiler {
     for (File dir : dirs) {
       // detect if this is a sequential substep (TODO: 22.11.44.77 sub-sub-steps ordering)
       if (dir.name.matches("^[0-9]+(.*)")) {
-        println(" SUBSTEP detected: ${codeDir.name} ${dir.name}")
+        log.debug(" SUBSTEP detected: ${codeDir.name} ${dir.name}")
         subStepDirs.add(dir)
       }
     }

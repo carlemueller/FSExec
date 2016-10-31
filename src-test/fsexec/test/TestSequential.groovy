@@ -8,6 +8,6 @@ import fsexec.execute.FSExecutor
 FSExecCompiler compiler = new FSExecCompiler()
 FSExecutor executor = new FSExecutor()
 
-FSEFlow flow = compiler.compile("./test-flows/code/test-seq",null,"./test-flows/work/test-seq",null,null)
+FSEFlow flow = compiler.compile("./test-flows/code/test-seq",null,"./test-flows/work/test-seq",null,null,["./proto-sample-data"] as String[])
 executor.exec(flow)
 

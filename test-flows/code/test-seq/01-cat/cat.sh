@@ -1,2 +1,2 @@
 #!/bin/bash
-cat proto-sample-data
+cat $1

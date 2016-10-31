@@ -12,7 +12,8 @@
 
 
 - problem: gluing inputs/outputs
-
+  - provide a dynamic mechanism to provide arguments between steps
+  - 
   
 - error model
 - restart model

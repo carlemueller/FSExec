@@ -3,6 +3,9 @@ package fsexec.compile
 import fsexec.execute.FSExecModes
 
 class FSEFlow {
+  String[] arguments
+  boolean argsUsed = false
+  Map<String,String> baseEnvironment
   String codeBasePath       // base directory of flow
   String configBasePath     // optional decorating directory structure that provides additional config info
   String workBasePath       // if intermediate files or flow control is used, this is necessary
@@ -25,6 +28,7 @@ class FSEStep {
   String flowExecMode = FSExecModes.FLOW_EXEC_PIPED
   String stepExecMode = FSExecModes.EXEC_PIPED
 }
+
 //execute(List commands, String[] envp, File workdir)
 class FSEScript {
   FSEStep stepInfo

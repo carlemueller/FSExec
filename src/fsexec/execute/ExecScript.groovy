@@ -64,10 +64,10 @@ class FSExecutor {
 
 // these modes inherit for all substeps
 class FSExecModes {
-  public static final String FLOW_EXEC_PIPED = "!!FLOW_EXEC_PIPED" // this is the default exec model
-  public static final String FLOW_EXEC_SEQUENTIAL = "!!FLOW_EXEC_SEQUENTIAL" // complete each step before executing the next
-  public static final String EXEC_PIPED = "!!EXEC_PIPED" // this is the default exec model
-  public static final String EXEC_SEQUENTIAL = "!!EXEC_SEQUENTIAL" // complete each step before executing the next
+  public static final String FLOW_EXEC_PIPED = "!FLOW_EXEC_PIPED!" // this is the default exec model
+  public static final String FLOW_EXEC_SEQUENTIAL = "!FLOW_EXEC_SEQUENTIAL!" // complete each step before executing the next
+  public static final String EXEC_PIPED = "!STEP_EXEC_PIPED!" // this is the default exec model
+  public static final String EXEC_SEQUENTIAL = "!STEP_EXEC_SEQUENTIAL!" // complete each step before executing the next
 }
 
 // System.getEnv returns map.
