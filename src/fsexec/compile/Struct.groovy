@@ -1,5 +1,7 @@
 package fsexec.compile
 
+import fsexec.execute.FSExecModes
+
 class FSEFlow {
   String codeBasePath       // base directory of flow
   String configBasePath     // optional decorating directory structure that provides additional config info
@@ -11,13 +13,17 @@ class FSEFlow {
 
 class FSEStep {
   String name
+  String index
+  String indexPath
   String path
   StepType type
   FSEFlow flow
   FSEStep parentStep
-  Map stepContext = [:]
+  Map<String,File> stepConfig = [:]
   List<FSEStep> childSteps = []
-  Object execInfo
+  FSEScript execInfo
+  String flowExecMode = FSExecModes.FLOW_EXEC_PIPED
+  String stepExecMode = FSExecModes.EXEC_PIPED
 }
 //execute(List commands, String[] envp, File workdir)
 class FSEScript {
@@ -31,6 +37,8 @@ class FSEScript {
 
 class FSEFlowExec {
   Process previousProcess
+  String previousProcessExecMode
+  String previousProcessOutputFileName
 }
 
 

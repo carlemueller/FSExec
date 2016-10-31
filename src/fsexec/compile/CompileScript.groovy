@@ -1,8 +1,11 @@
 package fsexec.compile
 
-import groovy.util.logging.Slf4j
+import java.util.regex.Pattern
 
 import org.apache.commons.lang3.StringUtils
+
+import fsexec.execute.FSExecModes
+import groovy.util.logging.Slf4j
 
 
 
@@ -18,10 +21,30 @@ class FSExecCompiler {
       return !file.isDirectory();
     }
   };
+  static Pattern indexExtractor = Pattern.compile("^([0-9]+)(.*)")
 
 
-  FSEFlow compile(String codeBase, String configBase, String workBase, String outputBase) {
+  FSEFlow compile(String codeBase, String configBase, String workBase, String inputBase, String outputBase) {
     println("code: $codeBase config: $configBase temp: $workBase output: $outputBase")
+    if (codeBase == null) {
+      throw new IllegalStateException("Flow compilation error: code base directory is required")
+    }
+    if (!(new File(codeBase).isDirectory())) {
+      throw new IllegalStateException("Flow compilation error: code directory ${codeBase} does not exist")
+    }
+    if (configBase != null && !(new File(configBase).isDirectory())) {
+      throw new IllegalStateException("Flow compilation error: configuration directory ${configBase} does not exist")
+    }
+    if (workBase != null && !(new File(workBase).isDirectory())) {
+      throw new IllegalStateException("Flow compilation error: work directory ${workBase} does not exist")
+    }
+    if (inputBase != null && !(new File(inputBase).isDirectory())) {
+      throw new IllegalStateException("Flow compilation error: input directory ${inputBase} does not exist")
+    }
+    if (outputBase != null && !(new File(outputBase).isDirectory())) {
+      throw new IllegalStateException("Flow compilation error: output directory ${outputBase} does not exist")
+    }
+
     FSEFlow info = new FSEFlow(codeBasePath:codeBase,configBasePath:configBase,workBasePath:workBase,outputBasePath:outputBase)
     info.rootStep = compileStep(info, null, "ROOT")
     return info
@@ -30,30 +53,32 @@ class FSExecCompiler {
   FSEStep compileStep(FSEFlow flow, FSEStep parentStep, String stepDirName) {
     FSEStep curStep = new FSEStep(flow:flow, parentStep:parentStep)
     curStep.name = stepDirName
+    curStep.index = parentStep == null ? "~~" : indexExtractor.matcher(curStep.name).group(1)
+    curStep.indexPath = (parentStep == null ? "" : parentStep.indexPath)+"~"+curStep.index
     curStep.path = parentStep == null ? flow.codeBasePath : parentStep.path + "/" + stepDirName
 
     File codeDir = new File(flow.codeBasePath + "/" + (parentStep == null ? "" : stepDirName))
-    File configDir = new File(flow.codeBasePath + "/" + (parentStep == null ? "" : stepDirName))
+    File configDir = new File(flow.configBasePath + "/" + (parentStep == null ? "" : stepDirName))
     // input / output / temp TBD
 
     List<File> subStepDirs = calcSubStepDirs(flow, curStep, codeDir)
     curStep.childSteps = subStepDirs.collect { compileStep(flow,curStep,it.name) }
 
-    Map<String,File> stepConfig = calcStepFiles(flow,curStep,codeDir)
+    curStep.stepConfig = calcStepFiles(flow,curStep,codeDir)
+
 
     // identify type of step
-    determineStepType(flow,curStep,stepConfig)
+    determineStepType(flow,curStep)
+    determineExecMode(flow,curStep)
 
-    // identify processing mode: sequential, each line, map reduce, fork join
     // identify piping / transition / flags
     // identify error / finally
 
     return curStep
   }
 
-  void determineStepType(FSEFlow flow, FSEStep curStep, Map<String,File> stepConfig) {
-
-    for (String cfgkey : stepConfig.keySet()) {
+  void determineStepType(FSEFlow flow, FSEStep curStep) {
+    for (String cfgkey : curStep.stepConfig.keySet()) {
       if (StringUtils.endsWithIgnoreCase(cfgkey,".sh")) {
         println "detected SHELL step: "+cfgkey
         curStep.type = StepType.SHELL
@@ -75,6 +100,35 @@ class FSExecCompiler {
       }
     }
   }
+
+  void determineExecMode(FSEFlow flow, FSEStep curStep) {
+    if (curStep.stepConfig.containsKey(FSExecModes.FLOW_EXEC_PIPED) && curStep.stepConfig.containsKey(FSExecModes.FLOW_EXEC_SEQUENTIAL)) {
+      throw new IllegalStateException("Step ${curStep.path} has multiple flow execution mode keys in step configuration")
+    }
+    if (curStep.stepConfig.containsKey(FSExecModes.EXEC_PIPED) && curStep.stepConfig.containsKey(FSExecModes.EXEC_SEQUENTIAL)) {
+      throw new IllegalStateException("Step ${curStep.path} has multiple step execution mode keys in step configuration")
+    }
+    if (curStep.stepConfig.containsKey(FSExecModes.FLOW_EXEC_PIPED) || curStep.stepConfig.containsKey(FSExecModes.FLOW_EXEC_SEQUENTIAL)) {
+      // these flags change the flow control mode
+      if (curStep.stepConfig.containsKey(FSExecModes.FLOW_EXEC_PIPED)) { curStep.flowExecMode = FSExecModes.FLOW_EXEC_PIPED }
+      if (curStep.stepConfig.containsKey(FSExecModes.FLOW_EXEC_SEQUENTIAL)) { curStep.flowExecMode = FSExecModes.FLOW_EXEC_SEQUENTIAL }
+    } else {
+      // otherwise, we inherit the flow control from the parent step
+      // ..... do we inherit from the previous step too? need to think
+      if (curStep.parentStep == null) { curStep.flowExecMode = FSExecModes.FLOW_EXEC_PIPED }
+      else { curStep.flowExecMode = curStep.parentStep.flowExecMode }
+    }
+    if (curStep.stepConfig.containsKey(FSExecModes.EXEC_PIPED) || curStep.stepConfig.containsKey(FSExecModes.EXEC_SEQUENTIAL)) {
+      // these flags override the flow control mode settings
+      if (curStep.stepConfig.containsKey(FSExecModes.EXEC_PIPED)) { curStep.stepExecMode = FSExecModes.EXEC_PIPED }
+      if (curStep.stepConfig.containsKey(FSExecModes.EXEC_SEQUENTIAL)) { curStep.stepExecMode = FSExecModes.EXEC_SEQUENTIAL }
+    } else {
+      // derive from flow control mode
+      if (curStep.flowExecMode == FSExecModes.FLOW_EXEC_PIPED) curStep.stepExecMode = FSExecModes.EXEC_PIPED
+      if (curStep.flowExecMode == FSExecModes.FLOW_EXEC_SEQUENTIAL) curStep.stepExecMode = FSExecModes.EXEC_SEQUENTIAL
+    }
+  }
+
 
   Map<String,File> calcStepFiles(FSEFlow flow, FSEStep curStep, File codeDir) {
     Map<String,File> files = [:]
