@@ -1,5 +1,6 @@
 package fsexec.compile
 
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 import org.apache.commons.lang3.StringUtils
@@ -21,7 +22,7 @@ class FSExecCompiler {
       return !file.isDirectory();
     }
   };
-  static Pattern indexExtractor = Pattern.compile("^([0-9]+)(.*)")
+  static Pattern indexExtractor = Pattern.compile("([0-9]+)(.*)")
 
 
   FSEFlow compile(String codeBase, String configBase, String workBase, String inputBase, String outputBase) {
@@ -50,29 +51,26 @@ class FSExecCompiler {
     return info
   }
 
+
   FSEStep compileStep(FSEFlow flow, FSEStep parentStep, String stepDirName) {
     FSEStep curStep = new FSEStep(flow:flow, parentStep:parentStep)
     curStep.name = stepDirName
-    curStep.index = parentStep == null ? "~~" : indexExtractor.matcher(curStep.name).group(1)
+    curStep.index = parentStep == null ? "~~" : getFirstGroup(indexExtractor,curStep.name)
     curStep.indexPath = (parentStep == null ? "" : parentStep.indexPath)+"~"+curStep.index
     curStep.path = parentStep == null ? flow.codeBasePath : parentStep.path + "/" + stepDirName
 
     File codeDir = new File(flow.codeBasePath + "/" + (parentStep == null ? "" : stepDirName))
     File configDir = new File(flow.configBasePath + "/" + (parentStep == null ? "" : stepDirName))
     // input / output / temp TBD
-
-    List<File> subStepDirs = calcSubStepDirs(flow, curStep, codeDir)
-    curStep.childSteps = subStepDirs.collect { compileStep(flow,curStep,it.name) }
-
     curStep.stepConfig = calcStepFiles(flow,curStep,codeDir)
-
-
     // identify type of step
     determineStepType(flow,curStep)
     determineExecMode(flow,curStep)
 
     // identify piping / transition / flags
     // identify error / finally
+    List<File> subStepDirs = calcSubStepDirs(flow, curStep, codeDir)
+    curStep.childSteps = subStepDirs.collect { compileStep(flow,curStep,it.name) }
 
     return curStep
   }
@@ -201,12 +199,12 @@ class FSExecCompiler {
     return null
   }
 
+  static String getFirstGroup(Pattern pattern, String input) {
+    Matcher m = pattern.matcher(input)
+    if (m.find()) {
+      return m.group(1)
+    }
+    return ""
+  }
+
 }
-
-
-
-
-
-Compiler compiler = new Compiler()
-
-compiler.compile("/home/cowardlydragon/AAA-CODE/FS-Exec/FS-Exec/test-flows/code/autorestart-cassandra",null,null,null)

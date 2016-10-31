@@ -33,21 +33,27 @@ class FSExecutor {
         if (shellInfo.env != null) {
           pb.environment(shellInfo.env)
         }
+        if (exec.previousProcess != null && exec.previousProcessExecMode == FSExecModes.EXEC_SEQUENTIAL) {
+          File inputFileFromPreviousStep = new File(exec.previousProcessOutputFileName)
+          pb.redirectInput(inputFileFromPreviousStep)
+        }
+
+        if (stepInfo.stepExecMode == FSExecModes.EXEC_SEQUENTIAL) {
+          exec.previousProcessOutputFileName = stepInfo.flow.workBasePath + "/" + stepInfo.indexPath
+          File stepOutputFile = new File(exec.previousProcessOutputFileName)
+          File stepErrorFile = new File(exec.previousProcessOutputFileName+".err")
+          pb.redirectOutput(stepOutputFile)
+          pb.redirectError(stepErrorFile)
+        }
         Process process = pb.start()
         if (exec.previousProcess != null) {
           if (exec.previousProcessExecMode == FSExecModes.EXEC_PIPED) {
             exec.previousProcess.pipeTo(process)
-          } else if (exec.previousProcessExecMode == FSExecModes.EXEC_SEQUENTIAL) {
-            // pipe in the finished product of the previous process
-            File file = new File(exec.previousProcessOutputFileName)
-            process << file
           }
         }
         if (stepInfo.stepExecMode == FSExecModes.EXEC_SEQUENTIAL) {
           // we need to wait for the process to complete and capture its output
-          exec.previousProcessOutputFileName = stepInfo.flow.workBasePath + "/" + stepInfo.indexPath
-          File file = new File(exec.previousProcessOutputFileName)
-          process.waitForProcessOutput(file.newInputStream(), System.err)
+          process.waitForProcessOutput()
         }
         exec.previousProcess = process
         exec.previousProcessExecMode = stepInfo.stepExecMode
