@@ -162,7 +162,7 @@ class FSExecCompiler {
       }
     }
     subStepDirs.sort()
-    println ""+subStepDirs
+    log.debug ""+subStepDirs
     return subStepDirs
   }
 

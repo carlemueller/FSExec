@@ -9,16 +9,27 @@
 
 
 
+- problem: specifying fsexec directories and launch args in single cmd line
+ - first arg is json?
+ - no, have unique flags for them and filter them out
 
 
 - problem: gluing inputs/outputs
   - provide a dynamic mechanism to provide arguments between steps
-  - 
+    - hm that would only work in sequential processing 
   
 - error model
-- restart model
-- status output
+  - already are capturing output streams
+  - capture error codes in sequential mode
+- restart ability in midpoint
 - jumps / conditional jumps
  
  
 - do we do a shared context?
+
+
+
+http://unix.stackexchange.com/questions/87284/how-to-share-environment-variables-between-shells-like-globals-related-to-a-mast
+- named pipes / mkfifo pipe_name
+- export -p dumps the environment
+- flock
