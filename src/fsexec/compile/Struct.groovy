@@ -25,8 +25,8 @@ class FSEStep {
   Map<String,File> stepConfig = [:]
   List<FSEStep> childSteps = []
   FSEScript execInfo
-  String flowExecMode = FSExecModes.FLOW_EXEC_PIPED
-  String stepExecMode = FSExecModes.EXEC_PIPED
+  String flowExecMode = FSExecModes.FLOW_EXEC_SEQUENTIAL
+  String stepExecMode = FSExecModes.EXEC_SEQUENTIAL
 }
 
 //execute(List commands, String[] envp, File workdir)

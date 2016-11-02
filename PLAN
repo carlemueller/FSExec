@@ -9,9 +9,6 @@
 
 
 
-- problem: specifying fsexec directories and launch args in single cmd line
- - first arg is json?
- - no, have unique flags for them and filter them out
 
 
 - problem: gluing inputs/outputs
